@@ -1,7 +1,5 @@
 /* eslint-disable prettier/prettier */
 import { useEffect, useState } from "react";
-import { Button } from "./components/ui/button";
-import { Input } from "./components/ui/input";
 
 function App(): JSX.Element {
   const ipcHandle = (): Promise<{ success: boolean; message: string}> => window.electron.ipcRenderer.invoke('auth:login', {
@@ -24,10 +22,8 @@ function App(): JSX.Element {
   }
 
   return (
-    <main className="p-4">
-      <button className="p-4 bg-slate-300 underline m-4" onClick={() => handleClick()}> click </button>
-      <Button variant={"destructive"}>ananı sıkeyım</Button>
-      <Input className="rounded"/>
+    <main>
+      <button className="bg-slate-400 p-4 rounded" onClick={() => handleClick()}> click </button>
       {no}
     </main>
   )
