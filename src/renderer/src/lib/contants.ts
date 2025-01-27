@@ -1,4 +1,4 @@
-import { HomeIcon, LogInIcon } from "lucide-react";
+import { HomeIcon, ListTodoIcon, LogInIcon } from "lucide-react";
 
 export const SIDEBAR_LINKS = [
   {
@@ -11,6 +11,12 @@ export const SIDEBAR_LINKS = [
     title: "Login",
     url: "/login",
     icon: LogInIcon
+  },
+
+  {
+    title: "Todo - Page ",
+    url: "/todo",
+    icon: ListTodoIcon
   },
 
 ]

@@ -1,4 +1,4 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
@@ -11,6 +11,14 @@ if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI)
     contextBridge.exposeInMainWorld('api', api)
+
+
+    contextBridge.exposeInMainWorld('todoAPI', {
+      getTodos: () => ipcRenderer.invoke('get-todos'),
+      createTodo: (payload: { title: string, content: string}) => ipcRenderer.invoke('create-todo', payload),
+      deleteTodo: (todoId: string) => ipcRenderer.invoke('delete-todo', todoId)
+    })
+    
   } catch (error) {
     console.error(error)
   }
