@@ -7,8 +7,9 @@ declare global {
     api: unknown,
     todoAPI: {
       getTodos: () => Promise<{ success: boolean, message: string, todos?: Todo[]}>
-      createTodo: (payload: { title: string, content: string}) => Promise<{ success: boolean, message: string, todo: Todo | null}>
-      deleteTodo: (todoId: string) => Promise<{ success: boolean, message: string}>
+      createTodo: (payload: {title: string, content: string}) => Promise<{success: boolean, message: string, todo?: Todo}>
+      deleteTodo: (id: string) => Promise<{success: boolean, message: string}>
+      toggleTodo: (id: string, status: boolean) => Promise<{success: boolean, message: string}>
     }
   }
 }

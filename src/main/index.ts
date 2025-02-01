@@ -3,7 +3,7 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import { DBManager } from './managers/DBManager'
+import { TodoManager } from './managers/TodoManager'
 
 function createWindow(): BrowserWindow {
   // Create the browser window.
@@ -68,9 +68,8 @@ app.whenReady().then(() => {
   
   const window = createWindow()
 
-  const dbManager = new DBManager();
 
-  
+  const todoManager = new TodoManager();
 
 
 

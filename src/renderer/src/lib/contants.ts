@@ -14,7 +14,7 @@ export const SIDEBAR_LINKS = [
   },
 
   {
-    title: "Todo - Page ",
+    title: "Todo - Page",
     url: "/todo",
     icon: ListTodoIcon
   },

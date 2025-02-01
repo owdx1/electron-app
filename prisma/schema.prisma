@@ -15,11 +15,14 @@ datasource db {
 
 
 model Todo {
-  
+
   id String @id @default(cuid())
+
   title String @unique
 
   content String
 
   checked Boolean @default(false)
+
+  @@map("todos")
 }

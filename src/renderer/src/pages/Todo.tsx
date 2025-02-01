@@ -1,191 +1,164 @@
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { cn } from '@/lib/utils'
-import { Todo } from '@prisma/client'
-import { Loader2Icon, PlusIcon, Trash2Icon } from 'lucide-react'
-import React, { useEffect, useState } from 'react'
-import { toast } from 'sonner'
-
-
-export type CreateTodoT = {
-  title: string
-  content: string
-}
-
-
+import { useEffect, useState } from 'react';
+import { Todo } from '@prisma/client';
+import { Loader2, Plus, Trash2, CheckCircle2 } from 'lucide-react';
+import { toast } from 'sonner';
+import CreateTodoDialog from '@/components/CreateTodoDialog';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 const TodoPage = () => {
-
-  const [todos, setTodos] = useState<Todo[]>([])
-
-  const [loading, setLoading] = useState(false)
-
-  const [newTodo, setNewTodo] = useState<CreateTodoT>({
-    title: "",
-    content: ""
-  })
-
-
+  const [todos, setTodos] = useState<Todo[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
-
     const fetchTodos = async () => {
       try {
-
-        const response = await window.todoAPI.getTodos()
-        if(response.success && response.todos) {
-          setTodos(response.todos)
+        setLoading(true);
+        const response = await window.todoAPI.getTodos();
+        if (response.success && response.todos) {
+          setTodos(response.todos);
         }
-    
       } catch (error) {
-        toast(error as string)
+        toast.error(error as string);
+      } finally {
+        setLoading(false);
       }
-    }
+    };
     fetchTodos();
-  }, [])
+  }, []);
 
+  const handleDeleteTodo = async (id: string) => {
+    try {
+      const resp = await window.todoAPI.deleteTodo(id);
+      if (resp.success) {
+        setTodos(todos.filter((todo) => todo.id !== id));
+        toast.success(resp.message);
+      }
+    } catch (error) {
+      toast.error(error as string);
+    }
+  };
 
-  const handleCreateTodo = async () => {
-
-    setLoading(true);
-
-    const response = await window.todoAPI.createTodo(newTodo)
-
-    setLoading(false);
-    toast(response.message);
-
-    if (response.success && response.todo?.id && response.todo !== null) {
-      setTodos(prev => [...prev, response.todo]);
-
-      setNewTodo({
-        title: '',
-        content:''
-      })
+  const handleToggleTodo = async (id: string, status: boolean) => {
+    try {
+      const resp = await window.todoAPI.toggleTodo(id, status);
+      if (resp.success) {
+        setTodos(prev => prev.map((todo) => {
+          if(todo.id === id) {
+            return { ...todo, checked: !todo.checked}
+          }
+          return todo
+        }))
+        toast.success(resp.message);
+      }
+    } catch (error) {
+      toast.error(error as string);
     }
   }
 
-  const handleDeleteTodo = async (todoId: string) => {
-    setLoading(true);
-
-    try {
-      const response = await window.todoAPI.deleteTodo(todoId)
-
-      setLoading(false);
-      toast(response.message)
-
-      if(response.success) {
-        setTodos(todos.filter(todo => todo.id !== todoId))
-      }
-
-    } catch (error) {
-      toast(error as string)
-    } 
-  }
-
-  const handleToggleTodo = (todoId: string) => {
-    setTodos(prev => prev.map(todo => 
-      todo.id === todoId 
-        ? { ...todo, checked: !todo.checked }
-        : todo
-    ))
+  if (loading) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading your todos...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className='flex flex-col gap-4 p-4'>
-
-      <header className='flex items-center justify-between px-4 py-2 border-b'>
-        <div>todos</div>
-        <Dialog>
-          <DialogTrigger> 
-            <PlusIcon /> 
-          </DialogTrigger>
-          <DialogContent>
-            <label htmlFor="">Title</label>
-            <Input 
-              value={newTodo.title}
-              onChange={(e) => setNewTodo({
-                ...newTodo,
-                title: e.target.value
-              })}
-              placeholder='Enter Title'
-              className='rounded'
-            />
-
-            <label htmlFor="">Content</label>
-            <Input 
-              value={newTodo.content}
-              onChange={(e) => setNewTodo({
-                ...newTodo,
-                content: e.target.value
-              })}
-              placeholder='Enter Content'
-              className='rounded'
-            />
-
-            <Button className={cn({
-                "rounded flex items-center justify-center gap-4": true,
-                "disabled opacity-40 pointer-events-none": loading
-              })}
-
-              onClick={handleCreateTodo}
-
-            >
-              Create Todo
-              {loading && <Loader2Icon className="animate-spin"/>}
-            </Button>
-          </DialogContent>
-        </Dialog>
-      </header>
-      
-      <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'>
-      {todos.map((todo) => (
-        <Card 
-          key={todo.id} 
-          className={cn(
-            "transition-all duration-300",
-            todo.checked ? "opacity-50 bg-gray-100" : "hover:bg-gray-50"
-          )}
+    <div className="container mx-auto py-6 space-y-8 p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Todo List</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage and organize your tasks efficiently
+          </p>
+        </div>
+        <Button
+          onClick={() => setIsDialogOpen(true)}
+          className="flex items-center gap-2 rounded"
         >
-          <CardHeader>
-            <CardTitle 
-              className={cn(
-                "transition-all",
-                todo.checked ? "line-through text-gray-500" : ""
-              )}
-            >
-              {todo.title}
-            </CardTitle>
-          </CardHeader>
-          <CardContent 
-            className={cn(
-              "transition-all flex-1 h-full",
-              todo.checked ? "text-gray-500 italic" : ""
-            )}
-          >
-            {todo.content}
-          </CardContent>
-          <CardFooter className='flex items-center justify-end space-x-2'>
-            <Checkbox 
-              checked={todo.checked}
-              onCheckedChange={() => handleToggleTodo(todo.id)}
-              className="mr-2"
-            />
-            <Button 
-              variant="destructive" 
-              size="icon"
-              onClick={() => handleDeleteTodo(todo.id)}
-            >
-              <Trash2Icon className="h-4 w-4" />
-            </Button>
-          </CardFooter>
-        </Card>
-      ))}
+          <Plus className="w-4 h-4" />
+          Add Todo
+        </Button>
       </div>
-    </div>
-  )
-}
 
-export default TodoPage
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span>Your Todos</span>
+            <Badge variant="secondary" className='rounded'>
+              {todos.length} {todos.length === 1 ? 'task' : 'tasks'}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className="h-[calc(100vh-16rem)]">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {todos.map((todo) => (
+                <Card key={todo.id} className="group">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className={cn({
+                            "w-4 h-4 text-primary cursor-pointer": true,
+                            "opacity-70 text-gray-200": !todo.checked,
+                            "text-green-600": todo.checked
+                          })}
+                          
+                          onClick={() => handleToggleTodo(todo.id, !todo.checked)}
+                          
+                          />
+                          <h3 className="font-semibold">{todo.title}</h3>
+                        </div>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {todo.content}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity rounded"
+                        onClick={() => handleDeleteTodo(todo.id)}
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
+                    
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            
+            {todos.length === 0 && (
+              <div className="text-center py-12">
+                <div className="flex justify-center">
+                  <CheckCircle2 className="w-12 h-12 text-muted-foreground/50" />
+                </div>
+                <h3 className="mt-4 text-lg font-semibold">No todos yet</h3>
+                <p className="text-sm text-muted-foreground">
+                  Create your first todo to get started
+                </p>
+              </div>
+            )}
+          </ScrollArea>
+        </CardContent>
+      </Card>
+
+      <CreateTodoDialog
+        setTodos={setTodos}
+        isOpen={isDialogOpen}
+        setIsOpen={setIsDialogOpen}
+      />
+    </div>
+  );
+};
+
+export default TodoPage;

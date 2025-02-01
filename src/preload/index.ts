@@ -12,13 +12,15 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld('electron', electronAPI)
     contextBridge.exposeInMainWorld('api', api)
 
-
     contextBridge.exposeInMainWorld('todoAPI', {
       getTodos: () => ipcRenderer.invoke('get-todos'),
       createTodo: (payload: { title: string, content: string}) => ipcRenderer.invoke('create-todo', payload),
-      deleteTodo: (todoId: string) => ipcRenderer.invoke('delete-todo', todoId)
+      deleteTodo: (id: string) => ipcRenderer.invoke('delete-todo', id),
+      toggleTodo: (id: string, status: boolean) => ipcRenderer.invoke('toggle-todo', id, status)
+      
     })
-    
+
+
   } catch (error) {
     console.error(error)
   }
