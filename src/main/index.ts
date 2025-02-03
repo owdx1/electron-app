@@ -4,6 +4,7 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { TodoManager } from './managers/TodoManager'
+import { SocketManager } from './managers/SocketManager'
 
 function createWindow(): BrowserWindow {
   // Create the browser window.
@@ -53,25 +54,13 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
-
-  ipcMain.handle('auth:login', async (_, credentials: { username: string, password: string }) => {
-    console.log(credentials.password, credentials.username);
-
-    return {
-      success: true,
-      message: "logged in succesfully"
-    }
-  })
-
   
   const window = createWindow()
 
 
   const todoManager = new TodoManager();
 
-
+  SocketManager.getInstance(window, 8000)
 
 
 
