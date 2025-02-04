@@ -17,7 +17,13 @@ if (process.contextIsolated) {
       createTodo: (payload: { title: string, content: string}) => ipcRenderer.invoke('create-todo', payload),
       deleteTodo: (id: string) => ipcRenderer.invoke('delete-todo', id),
       toggleTodo: (id: string, status: boolean) => ipcRenderer.invoke('toggle-todo', id, status)
-      
+    })
+
+    contextBridge.exposeInMainWorld('authAPI', {
+      login:(payload: { email: string, password: string }) => ipcRenderer.invoke("auth:login", payload),
+      register:(payload: { name: string, email: string, password: string }) => ipcRenderer.invoke("auth:register", payload),
+      logout:(userid: string) => ipcRenderer.invoke("auth:logout", userid),
+      validateToken: (token: string) => ipcRenderer.invoke("auth:validate", token)
     })
 
 

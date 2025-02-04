@@ -12,17 +12,4 @@ export const SIDEBAR_LINKS = [
     url: "/login",
     icon: LogInIcon
   },
-
-  {
-    title: "Todo - Page",
-    url: "/todo",
-    icon: ListTodoIcon
-  },
-
-  {
-    title: "Stats",
-    url: "/stats",
-    icon: TowerControl
-  },
-
 ]

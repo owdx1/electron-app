@@ -5,9 +5,9 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { TodoManager } from './managers/TodoManager'
 import { SocketManager } from './managers/SocketManager'
-
+import axios from "axios"
 function createWindow(): BrowserWindow {
-  // Create the browser window.
+
   const mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
@@ -40,16 +40,9 @@ function createWindow(): BrowserWindow {
   return mainWindow
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-  // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
-  // Default open or close DevTools by F12 in development
-  // and ignore CommandOrControl + R in production.
-  // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
@@ -57,41 +50,191 @@ app.whenReady().then(() => {
   
   const window = createWindow()
 
+  const base_path = "http://192.168.1.103:8000/api/auth/"
 
-  const todoManager = new TodoManager();
+  ipcMain.handle('auth:login', async (_, payload: { email: string, password: string }) => {
+    try {
 
-  SocketManager.getInstance(window, 8000)
+      if(!payload.email || !payload.password) {
+        return {
+          success: false,
+          message: "Invalid Credentials",
+        };
+      }
 
+      const resp = await axios.post(base_path + "login/", payload, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      const data = resp.data;
+  
+      if (resp.status !== 200 || data.success === false) {
+        return {
+          success: false,
+          message: data.message || 'Login failed',
+        };
+      }
 
+      return {
+        success: true,
+        token: data.token,
+        user: data.user,
+        message: data.message,
+      };
+    } 
+    
+    catch (error) {
+      console.error('Login Error:', error);
+      return {
+        success: false,
+        message: 'Failed to connect to server',
+      };
+    }
+  });
 
+  ipcMain.handle("auth:validate", async (_, token: string) => {
+    try {
 
+      const resp = await axios.post(base_path + "validate-token/", { token: token }, {
+        headers: {
+          'Content-Type':'application/json'
+        }
+      })
 
+      const data = resp.data
 
+      if(resp.status !== 200) {
+        return {
+          success: false,
+          message: data.message
+        }
+      }
 
+      return {
+        success: true,
+        message: data.message,
+        user: data.user,
+        ntoken: data.ntoken
+      }
+      
+    } catch (error: any) {
+      console.error('Validation Error!');
+      return {
+        success: false,
+        message: 'Server Error',
+      };
+    }
+  })
 
-  let number = 0;
+  ipcMain.handle("auth:register", async(_, payload: { email: string, password: string}) => {
 
-  setInterval(() => {
-    window.webContents.send('number', number);
-    number++;
-  }, 3000)
+    try {
 
+      if(!payload.email || !payload.password) {
+        return {
+          success: false,
+          message: "Invalid Credentials",
+        };
+      }
+
+      const resp = await axios.post(base_path + "register/", payload, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      const data = resp.data;
+  
+      if (resp.status !== 200 || data.success === false) {
+        return {
+          success: false,
+          message: data.message || 'Register failed',
+        };
+      }
+
+      return {
+        success: true,
+        token: data.token,
+        user: data.user,
+        message: data.message,
+      };
+    } 
+    
+    catch (error: any) {
+
+      if(error.status === 409) {
+        return {
+          success: false,
+          message: 'Exists',
+        };
+      }
+      return {
+        success: false,
+        message: 'Failed to connect or exists',
+      };
+    }
+
+  })
+  
+
+  ipcMain.handle("auth:logout", async(_, userid: string) => {
+
+    try {
+
+      if(!userid) {
+        return {
+          success: false,
+          message: "Invalid logout",
+        };
+      }
+
+      const resp = await axios.post(base_path + "logout/", { userid: userid }, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log("gelen responseeeeeeeeeeeeeeee", resp);
+  
+      const data = resp.data;
+  
+      if (resp.status !== 200 || data.success === false) {
+        return {
+          success: false,
+          message: data.message || 'logout failed',
+        };
+      }
+
+      return {
+        success: true,
+        message: data.message,
+      };
+    } 
+    
+    catch (error: any) {
+      if(error.status === 409) {
+        return {
+          success: false,
+          message: 'Exists',
+        };
+      }
+      return {
+        success: false,
+        message: 'Failed to connect',
+      };
+    }
+
+  })
 
   app.on('activate', function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
 })
-
-// In this file you can include the rest of your app"s specific main process
-// code. You can also put them in separate files and require them here.

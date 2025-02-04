@@ -83,3 +83,16 @@
     @apply bg-background text-foreground;
   }
 }
+
+
+@keyframes rainbow {
+  0% { color: #60A5FA; }   /* blue-400 */
+  25% { color: #34D399; }  /* emerald-400 */
+  50% { color: #F472B6; }  /* pink-400 */
+  75% { color: #818CF8; }  /* indigo-400 */
+  100% { color: #60A5FA; } /* back to blue-400 */
+}
+
+.animate-rainbow {
+  animation: rainbow 8s infinite;
+}
